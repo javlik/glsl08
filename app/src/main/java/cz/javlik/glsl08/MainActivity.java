@@ -1,5 +1,5 @@
 package cz.javlik.glsl08;
-
+// changed in xml - for an xchg test
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
