@@ -27,6 +27,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import android.*;
 import android.hardware.*;
+import android.widget.*;
 
 
 public class MainActivity extends Activity  {
@@ -36,6 +37,8 @@ public class MainActivity extends Activity  {
     private float mPreviousX, mPreviousY;
     private Sensor mSensor;
     private SensorManager mSensorManager;
+	private TextView tv0, tv1, tv2;
+	Ael ael;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +50,16 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setRenderer(mRenderer);
         mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mGLSurfaceView.setKeepScreenOn(true);
-        setContentView(mGLSurfaceView);
+        //setContentView(mGLSurfaceView);
 		setContentView(R.layout.activity_main);
-
+		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
+		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
+		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
+		
+		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+		mSensorManager.registerListener(ael, mSensor, SensorManager.SENSOR_DELAY_GAME);
         //mGLSurfaceView.setOnTouchListener(this);
     }
 
@@ -124,7 +132,26 @@ public class MainActivity extends Activity  {
         return false;
     }
 
+	protected class Ael implements SensorEventListener
+	{
 
+		@Override
+		public void onSensorChanged(SensorEvent p1)
+		{
+			// TODO: Implement this method
+			tv0.setText("" + p1.values[0]);
+			tv1.setText("" + p1.values[1]);
+			tv2.setText("" + p1.values[2]);
+		}
+
+		@Override
+		public void onAccuracyChanged(Sensor p1, int p2)
+		{
+			// TODO: Implement this method
+		}
+		
+		
+	}
 
     protected class ShaderRenderer implements GLSurfaceView.Renderer {
         private static final int FLOAT_SIZE_BYTES = Float.SIZE / Byte.SIZE;
@@ -135,6 +162,7 @@ public class MainActivity extends Activity  {
         private int miResolutionHandle;
         private int miGlobalTimeHandle;
         private int miMouseHandle;
+		
 
         private float[] mMouse = new float[] {0,0};
         private int maPositionHandle;
