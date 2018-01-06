@@ -47,7 +47,7 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setRenderer(mRenderer);
         mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mGLSurfaceView.setKeepScreenOn(true);
-        setContentView(mGLSurfaceView);
+        //setContentView(mGLSurfaceView);
 		setContentView(R.layout.activity_main);
 
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
