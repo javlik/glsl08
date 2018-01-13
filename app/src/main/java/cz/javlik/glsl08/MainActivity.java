@@ -21,7 +21,6 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -29,18 +28,6 @@ import javax.microedition.khronos.opengles.GL10;
 import android.*;
 import android.hardware.*;
 import android.widget.*;
-
-import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
-import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
-import static android.opengl.GLES20.GL_FRAMEBUFFER;
-import static android.opengl.GLES20.GL_LINEAR;
-import static android.opengl.GLES20.GL_RENDERBUFFER;
-import static android.opengl.GLES20.GL_RGBA;
-import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_MIN_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_S;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_T;
-import static android.opengl.GLES20.GL_UNSIGNED_BYTE;
 
 
 public class MainActivity extends Activity  {
@@ -68,12 +55,13 @@ public class MainActivity extends Activity  {
 		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
 		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
 		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
-        */
+		
 		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
-		mSensorManager.registerListener(ael, mSensor, SensorManager.SENSOR_DELAY_GAME);
-        //mGLSurfaceView.setOnTouchListener(this);
+		//mSensorManager.registerListener(ael, mSensor, SensorManager.SENSOR_DELAY_GAME);
+       */
+		//mGLSurfaceView.setOnTouchListener(this);
     }
 
     @Override
@@ -89,6 +77,7 @@ public class MainActivity extends Activity  {
     }
 
     @Override
+	
     protected void onDestroy() {
         super.onDestroy();
     }
@@ -162,8 +151,8 @@ public class MainActivity extends Activity  {
 		{
 			// TODO: Implement this method
 		}
-
-
+		
+		
 	}
 
     protected class ShaderRenderer implements GLSurfaceView.Renderer {
@@ -175,13 +164,39 @@ public class MainActivity extends Activity  {
         private int miResolutionHandle;
         private int miGlobalTimeHandle;
         private int miMouseHandle;
-        private IntBuffer frameBuffer;
-        private IntBuffer texture;
-
+		
+		private int mFrameBufferObject;
+		private int mRenderBufferObject;
+		private int tempArray[];
 
         private float[] mMouse = new float[] {0,0};
         private int maPositionHandle;
         private long mStartTime;
+		
+		private static final String VERTEX_SHADER =
+		"attribute vec2 position;" +
+		"void main() {" +
+		"gl_Position = vec4(position, 0., 1.);" +
+		"}";
+		private static final String FRAGMENT_SHADER =
+		"#ifdef GL_FRAGMENT_PRECISION_HIGH\n" +
+		"precision highp float;\n" +
+		"#else\n" +
+		"precision mediump float;\n" +
+		"#endif\n" +
+		"uniform vec2 resolution;" +
+		"uniform sampler2D frame;" +
+		"void main(void) {" +
+		"gl_FragColor = texture2D(frame," +
+		"gl_FragCoord.xy / resolution.xy).rgba;" +
+		"}";
+		
+		private int surfaceProgram = 0;
+		private int surfacePositionLoc;		
+		private final ByteBuffer vertexBuffer;
+		private int surfaceResolutionLoc;
+		private int surfaceFrameLoc;
+		private final float surfaceResolution[] = new float[]{0, 0};
 
         private ShaderRenderer() {
             float[] rectData = new float[]{
@@ -193,8 +208,22 @@ public class MainActivity extends Activity  {
                     .order(ByteOrder.nativeOrder()).asFloatBuffer();
             mRectData.put(rectData).position(0);
 
+
+			vertexBuffer = ByteBuffer.allocateDirect(8);
+			vertexBuffer.put(new byte[]{
+								 -1, 1,
+								 -1, -1,
+								 1, 1,
+								 1, -1}).position(0);
+		
+			
             mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
-            mFragmentShader = readShader(R.raw.waves, MainActivity.this);
+            mFragmentShader = readShader(R.raw.cubes, MainActivity.this);
+			
+			surfaceResolutionLoc = GLES20.glGetUniformLocation(
+				surfaceProgram, "resolution");
+			surfaceFrameLoc = GLES20.glGetUniformLocation(
+				surfaceProgram, "frame");
         }
 
         @Override
@@ -209,42 +238,48 @@ public class MainActivity extends Activity  {
             GLES20.glEnableVertexAttribArray(maPositionHandle);
             mRectData.position(0);
             GLES20.glVertexAttribPointer(maPositionHandle, 2, GLES20.GL_FLOAT, false, 0, mRectData);
-
             mStartTime = SystemClock.elapsedRealtime();
-
-
-
-
-
-
         }
 
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             mResolution = new float[] {width, height};
-            GLES20.glViewport(0, 0, width, height);
+            
+			
+			////			
+			tempArray = new int[1];
+			GLES20.glGenBuffers(1, tempArray, 0);
+			//mFrameBufferObject = tempArray[0];
+// create fbo
 
-            GLES20.glGenFramebuffers(1, frameBuffer);
-            GLES20.glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
 
-//Create a texture
-            GLES20.glGenTextures(1, texture);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			GLES20.glGenBuffers(1, tempArray, 0);
+			//mRenderBufferObject = tempArray[0];
+			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, tempArray[0]);
 
-//Attach the texture to the framebuffer
-            GLES20.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, texture, 0);
-
+			GLES20.glGenTextures(1, tempArray, 0);
+			GLES20.glBindTexture(1, tempArray[0]);
+			
+// 
+			GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_RGBA, width, height);
+			
+////
+			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,	GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_RENDERBUFFER, mRenderBufferObject);
+			
+			surfaceResolution[0] = width;
+			surfaceResolution[1] = height;
+			
+			createSurfProgram();
+			
         }
 
         @Override
         public void onDrawFrame(GL10 gl) {
-            GLES20.glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
-            GLES20.glBindRenderbuffer(GL_RENDERBUFFER, texture);
+			
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
+			GLES20.glViewport(0, 0, (int)mResolution[0]/4, (int)mResolution[1]/4);
+			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, mRenderBufferObject);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -256,6 +291,40 @@ public class MainActivity extends Activity  {
             // uniforms ::
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+
+			GLES20.glViewport(0, 0, (int)mResolution[0], (int)mResolution[1]);
+			
+			GLES20.glUseProgram(surfaceProgram);
+
+			GLES20.glVertexAttribPointer(
+				surfacePositionLoc,
+				2,
+				GLES20.GL_BYTE,
+				false,
+				0,
+				vertexBuffer);
+
+			GLES20.glUniform2fv(
+				surfaceResolutionLoc,
+				1,
+				surfaceResolution,
+				0);
+
+			GLES20.glUniform1i(surfaceFrameLoc, 0);
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			GLES20.glBindTexture(
+				GLES20.GL_TEXTURE_2D,
+				0);
+
+			GLES20.glClear(
+				GLES20.GL_COLOR_BUFFER_BIT);
+			GLES20.glDrawArrays(
+				GLES20.GL_TRIANGLE_STRIP,
+				0,
+				4);			
             mGLSurfaceView.requestRender();
         }
 
@@ -303,6 +372,35 @@ public class MainActivity extends Activity  {
             }
             return program;
         }
+		
+		void createSurfProgram()
+		{
+			int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER);
+            if (vertexShader == 0) {
+                return;
+            }
+
+            int pixelShader = loadShader(GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER);
+            if (pixelShader == 0) {
+                return;
+            }
+
+            int program = GLES20.glCreateProgram();
+            if (program != 0) {
+                GLES20.glAttachShader(program, vertexShader);
+                GLES20.glAttachShader(program, pixelShader);
+                GLES20.glLinkProgram(program);
+                int[] linkStatus = new int[1];
+                GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
+                if (linkStatus[0] != GLES20.GL_TRUE) {
+                    Log.e(TAG, "Could not link program: ");
+                    Log.e(TAG, GLES20.glGetProgramInfoLog(program));
+                    GLES20.glDeleteProgram(program);
+                    program = 0;
+                }
+            }
+			surfaceProgram = program;
+		}
 
         private String readShader(int resource, Context context) {
             Resources resources = context.getResources();
