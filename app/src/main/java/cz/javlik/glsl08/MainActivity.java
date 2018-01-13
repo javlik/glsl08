@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -28,6 +29,18 @@ import javax.microedition.khronos.opengles.GL10;
 import android.*;
 import android.hardware.*;
 import android.widget.*;
+
+import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
+import static android.opengl.GLES20.GL_COLOR_ATTACHMENT0;
+import static android.opengl.GLES20.GL_FRAMEBUFFER;
+import static android.opengl.GLES20.GL_LINEAR;
+import static android.opengl.GLES20.GL_RENDERBUFFER;
+import static android.opengl.GLES20.GL_RGBA;
+import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
+import static android.opengl.GLES20.GL_TEXTURE_MIN_FILTER;
+import static android.opengl.GLES20.GL_TEXTURE_WRAP_S;
+import static android.opengl.GLES20.GL_TEXTURE_WRAP_T;
+import static android.opengl.GLES20.GL_UNSIGNED_BYTE;
 
 
 public class MainActivity extends Activity  {
@@ -50,12 +63,12 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setRenderer(mRenderer);
         mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mGLSurfaceView.setKeepScreenOn(true);
-        //setContentView(mGLSurfaceView);
-		setContentView(R.layout.activity_main);
+        setContentView(mGLSurfaceView);
+		/*setContentView(R.layout.activity_main);
 		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
 		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
 		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
-		
+        */
 		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
@@ -149,8 +162,8 @@ public class MainActivity extends Activity  {
 		{
 			// TODO: Implement this method
 		}
-		
-		
+
+
 	}
 
     protected class ShaderRenderer implements GLSurfaceView.Renderer {
@@ -162,7 +175,9 @@ public class MainActivity extends Activity  {
         private int miResolutionHandle;
         private int miGlobalTimeHandle;
         private int miMouseHandle;
-		
+        private IntBuffer frameBuffer;
+        private IntBuffer texture;
+
 
         private float[] mMouse = new float[] {0,0};
         private int maPositionHandle;
@@ -196,16 +211,40 @@ public class MainActivity extends Activity  {
             GLES20.glVertexAttribPointer(maPositionHandle, 2, GLES20.GL_FLOAT, false, 0, mRectData);
 
             mStartTime = SystemClock.elapsedRealtime();
+
+
+
+
+
+
         }
 
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             mResolution = new float[] {width, height};
             GLES20.glViewport(0, 0, width, height);
+
+            GLES20.glGenFramebuffers(1, frameBuffer);
+            GLES20.glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+
+//Create a texture
+            GLES20.glGenTextures(1, texture);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+//Attach the texture to the framebuffer
+            GLES20.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, texture, 0);
+
         }
 
         @Override
         public void onDrawFrame(GL10 gl) {
+            GLES20.glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+            GLES20.glBindRenderbuffer(GL_RENDERBUFFER, texture);
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 
