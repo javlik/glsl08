@@ -190,13 +190,18 @@ public class MainActivity extends Activity  {
 		"gl_FragColor = texture2D(frame," +
 		"gl_FragCoord.xy / resolution.xy).rgba;" +
 		"}";
-		
+
+		private static final int RATIO = 4;
+
+		private int program = 0;
 		private int surfaceProgram = 0;
 		private int surfacePositionLoc;		
 		private final ByteBuffer vertexBuffer;
 		private int surfaceResolutionLoc;
 		private int surfaceFrameLoc;
 		private final float surfaceResolution[] = new float[]{0, 0};
+        private final int fb[] = new int[]{0, 0};
+        private final int tx[] = new int[]{0, 0};
 
         private ShaderRenderer() {
             float[] rectData = new float[]{
@@ -228,7 +233,7 @@ public class MainActivity extends Activity  {
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            int program = createProgram(mVertexShader, mFragmentShader);
+            program = createProgram(mVertexShader, mFragmentShader);
 
             miGlobalTimeHandle = GLES20.glGetUniformLocation(program, "time");
             miResolutionHandle = GLES20.glGetUniformLocation(program, "resolution");
@@ -266,22 +271,42 @@ public class MainActivity extends Activity  {
 			
 ////
 			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,	GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_RENDERBUFFER, mRenderBufferObject);
-			
-			surfaceResolution[0] = width;
-			surfaceResolution[1] = height;
-			
-			createSurfProgram();
+
+            surfaceResolution[0] = width;
+            surfaceResolution[1] = height;
+
+            createSurfProgram();
 			
         }
 
         @Override
         public void onDrawFrame(GL10 gl) {
-			
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
-			GLES20.glViewport(0, 0, (int)mResolution[0]/4, (int)mResolution[1]/4);
-			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, mRenderBufferObject);
-            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-            GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+            // 1st stage
+
+            GLES20.glUseProgram(program);
+            GLES20.glVertexAttribPointer(0, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
+
+
+
+            GLES20.glViewport(0, 0, (int)mResolution[0] / RATIO, (int)mResolution[1] / RATIO);
+
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject); // = 1
+
+            GLES20.glDrawArrays(
+                    GLES20.GL_TRIANGLE_STRIP,
+                    0,
+                    4);
+
+            // 2nd stage
+
+
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+
+            GLES20.glViewport(0,0, (int)mResolution[0], (int)mResolution[1]);
+
+            GLES20.glUseProgram(surfaceProgram);
+            GLES20.glVertexAttribPointer(surfacePositionLoc, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
             // :: uniforms
             GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
@@ -290,41 +315,20 @@ public class MainActivity extends Activity  {
             GLES20.glUniform1f(miGlobalTimeHandle, ((float) (nowInSec - mStartTime)) / 1000f);
             // uniforms ::
 
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
-			GLES20.glViewport(0, 0, (int)mResolution[0], (int)mResolution[1]);
-			
-			GLES20.glUseProgram(surfaceProgram);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(
+                    GLES20.GL_TEXTURE_2D,
+                    1);
 
-			GLES20.glVertexAttribPointer(
-				surfacePositionLoc,
-				2,
-				GLES20.GL_BYTE,
-				false,
-				0,
-				vertexBuffer);
+            GLES20.glClear(
+                    GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glDrawArrays(
+                    GLES20.GL_TRIANGLE_STRIP,
+                    0,
+                    4);
 
-			GLES20.glUniform2fv(
-				surfaceResolutionLoc,
-				1,
-				surfaceResolution,
-				0);
-
-			GLES20.glUniform1i(surfaceFrameLoc, 0);
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-			GLES20.glBindTexture(
-				GLES20.GL_TEXTURE_2D,
-				0);
-
-			GLES20.glClear(
-				GLES20.GL_COLOR_BUFFER_BIT);
-			GLES20.glDrawArrays(
-				GLES20.GL_TRIANGLE_STRIP,
-				0,
-				4);			
             mGLSurfaceView.requestRender();
         }
 
@@ -421,6 +425,9 @@ public class MainActivity extends Activity  {
 
             return stringBuilder.toString();
         }
+
+
+
     }
 }
 
