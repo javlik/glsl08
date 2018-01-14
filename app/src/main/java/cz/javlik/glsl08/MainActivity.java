@@ -55,7 +55,7 @@ public class MainActivity extends Activity  {
 		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
 		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
 		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
-		
+
 		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
@@ -77,7 +77,7 @@ public class MainActivity extends Activity  {
     }
 
     @Override
-	
+
     protected void onDestroy() {
         super.onDestroy();
     }
@@ -151,8 +151,8 @@ public class MainActivity extends Activity  {
 		{
 			// TODO: Implement this method
 		}
-		
-		
+
+
 	}
 
     protected class ShaderRenderer implements GLSurfaceView.Renderer {
@@ -164,7 +164,8 @@ public class MainActivity extends Activity  {
         private int miResolutionHandle;
         private int miGlobalTimeHandle;
         private int miMouseHandle;
-		
+        private float [] mReducedResolution;
+
 		private int mFrameBufferObject;
 		private int mRenderBufferObject;
 		private int mTexture;
@@ -173,7 +174,7 @@ public class MainActivity extends Activity  {
         private float[] mMouse = new float[] {0,0};
         private int maPositionHandle;
         private long mStartTime;
-		
+
 		private static final String VERTEX_SHADER =
 		"attribute vec2 position;" +
 		"void main() {" +
@@ -197,12 +198,12 @@ public class MainActivity extends Activity  {
 
 		private int program = 0;
 		private int surfaceProgram = 0;
-		private int surfacePositionLoc;		
+		private int surfacePositionLoc;
 		private final ByteBuffer vertexBuffer;
 		private int surfaceResolutionLoc;
 		private int surfaceFrameLoc;
 		private final float surfaceResolution[] = new float[]{0, 0};
- 
+
         private ShaderRenderer() {
             float[] rectData = new float[]{
                     -1f, -1f, -1f, 1f,
@@ -220,11 +221,11 @@ public class MainActivity extends Activity  {
 								 -1, -1,
 								 1, 1,
 								 1, -1}).position(0);
-		
-			
+
+
             mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
-            mFragmentShader = readShader(R.raw.cubes, MainActivity.this);
-			
+            mFragmentShader = readShader(R.raw.waves, MainActivity.this);
+
 			surfaceResolutionLoc = GLES20.glGetUniformLocation(
 				surfaceProgram, "resolution");
 			surfaceFrameLoc = GLES20.glGetUniformLocation(
@@ -249,39 +250,33 @@ public class MainActivity extends Activity  {
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             mResolution = new float[] {width, height};
-            
-			
-			////			
+            mReducedResolution = new float[] {width / RATIO, height / RATIO};
+            GLES20.glViewport(0, 0, width, height);
+
+			////
 			tempArray = new int[1];
 			GLES20.glGenFramebuffers(1, tempArray, 0);
 			//mFrameBufferObject = tempArray[0];
 // create fbo
 
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
+//			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
 			mFrameBufferObject = tempArray[0];
-			//GLES20.glGenBuffers(1, tempArray, 0);
-			//mRenderBufferObject = tempArray[0];
-			//GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, tempArray[0]);
+
 
 			GLES20.glGenTextures(1, tempArray, 0);
 			mTexture = tempArray[0];
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexture);
-			//GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0,GLES20.GL_RGB, 1024, 768, 0,GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, 0);
-			
-			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-// 
-			//GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_RGBA, width, height);
-			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
-////
-			
-			//GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,	GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_RENDERBUFFER, mRenderBufferObject);
 
-            surfaceResolution[0] = width;
-            surfaceResolution[1] = height;
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+
+            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
+
+            surfaceResolution[0] = width / RATIO;
+            surfaceResolution[1] = height / RATIO;
 
             createSurfProgram();
-			
+
         }
 
         @Override
@@ -294,7 +289,7 @@ public class MainActivity extends Activity  {
 
 
 
-            GLES20.glViewport(0, 0, (int)mResolution[0] / RATIO, (int)mResolution[1] / RATIO);
+            GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
 
 			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
 
@@ -304,7 +299,7 @@ public class MainActivity extends Activity  {
                     4);
 
             // 2nd stage
-
+/*
 
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
@@ -313,15 +308,15 @@ public class MainActivity extends Activity  {
             GLES20.glUseProgram(surfaceProgram);
             GLES20.glVertexAttribPointer(surfacePositionLoc, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
-            // :: uniforms
+ */           // :: uniforms
             GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
-            GLES20.glUniform2fv(miResolutionHandle, 1, mResolution, 0);
+            GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
             GLES20.glUniform1f(miGlobalTimeHandle, ((float) (nowInSec - mStartTime)) / 1000f);
 
 			GLES20.glUniform1i(surfaceFrameLoc, 0);
             // uniforms ::
-
+/*
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -335,7 +330,7 @@ public class MainActivity extends Activity  {
                     GLES20.GL_TRIANGLE_STRIP,
                     0,
                     4);
-
+*/
             mGLSurfaceView.requestRender();
         }
 
@@ -383,7 +378,7 @@ public class MainActivity extends Activity  {
             }
             return program;
         }
-		
+
 		void createSurfProgram()
 		{
 			int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VERTEX_SHADER);
