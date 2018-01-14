@@ -167,7 +167,7 @@ public class MainActivity extends Activity  {
         private float [] mReducedResolution;
 
 		private int mFrameBufferObject;
-		private int mRenderBufferObject;
+		//private int mRenderBufferObject;
 		private int mTexture;
 		private int tempArray[];
 
@@ -206,7 +206,7 @@ public class MainActivity extends Activity  {
 
         private ShaderRenderer() {
             float[] rectData = new float[]{
-                    -1f, -1f, -1f, 1f,
+                    -0.1f, -1f, -1f, 1f,
                     1f, -1f, 1f, 1f,
             };
 
@@ -226,10 +226,10 @@ public class MainActivity extends Activity  {
             mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
             mFragmentShader = readShader(R.raw.waves, MainActivity.this);
 
-			surfaceResolutionLoc = GLES20.glGetUniformLocation(
-				surfaceProgram, "resolution");
-			surfaceFrameLoc = GLES20.glGetUniformLocation(
-				surfaceProgram, "frame");
+
+
+
+
         }
 
         @Override
@@ -242,6 +242,7 @@ public class MainActivity extends Activity  {
 
             GLES20.glUseProgram(program);
             GLES20.glEnableVertexAttribArray(maPositionHandle);
+
             mRectData.position(0);
             GLES20.glVertexAttribPointer(maPositionHandle, 2, GLES20.GL_FLOAT, false, 0, mRectData);
             mStartTime = SystemClock.elapsedRealtime();
@@ -259,7 +260,7 @@ public class MainActivity extends Activity  {
 			//mFrameBufferObject = tempArray[0];
 // create fbo
 
-//			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
 			mFrameBufferObject = tempArray[0];
 
 
@@ -276,7 +277,14 @@ public class MainActivity extends Activity  {
             surfaceResolution[1] = height / RATIO;
 
             createSurfProgram();
-
+            GLES20.glUseProgram(surfaceProgram);
+            surfaceResolutionLoc = GLES20.glGetUniformLocation(
+                    surfaceProgram, "resolution");
+            surfaceFrameLoc = GLES20.glGetUniformLocation(
+                    surfaceProgram, "frame");
+            surfacePositionLoc = GLES20.glGetAttribLocation(
+                    surfaceProgram, "position");
+            GLES20.glEnableVertexAttribArray(surfacePositionLoc);
         }
 
         @Override
@@ -290,8 +298,8 @@ public class MainActivity extends Activity  {
 
 
             GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
-
-			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
+///
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
 
             GLES20.glDrawArrays(
                     GLES20.GL_TRIANGLE_STRIP,
@@ -299,7 +307,7 @@ public class MainActivity extends Activity  {
                     4);
 
             // 2nd stage
-/*
+////
 
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
@@ -308,7 +316,7 @@ public class MainActivity extends Activity  {
             GLES20.glUseProgram(surfaceProgram);
             GLES20.glVertexAttribPointer(surfacePositionLoc, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
- */           // :: uniforms
+ /////           // :: uniforms
             GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
             GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
@@ -316,7 +324,7 @@ public class MainActivity extends Activity  {
 
 			GLES20.glUniform1i(surfaceFrameLoc, 0);
             // uniforms ::
-/*
+////
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -330,7 +338,7 @@ public class MainActivity extends Activity  {
                     GLES20.GL_TRIANGLE_STRIP,
                     0,
                     4);
-*/
+/////
             mGLSurfaceView.requestRender();
         }
 
