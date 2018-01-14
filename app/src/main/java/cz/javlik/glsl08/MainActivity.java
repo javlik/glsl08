@@ -167,6 +167,7 @@ public class MainActivity extends Activity  {
 		
 		private int mFrameBufferObject;
 		private int mRenderBufferObject;
+		private int mTexture;
 		private int tempArray[];
 
         private float[] mMouse = new float[] {0,0};
@@ -187,6 +188,7 @@ public class MainActivity extends Activity  {
 		"uniform vec2 resolution;" +
 		"uniform sampler2D frame;" +
 		"void main(void) {" +
+		//"gl_FragColor = vec4(0., 0., 1., 1.);"+
 		"gl_FragColor = texture2D(frame," +
 		"gl_FragCoord.xy / resolution.xy).rgba;" +
 		"}";
@@ -200,9 +202,7 @@ public class MainActivity extends Activity  {
 		private int surfaceResolutionLoc;
 		private int surfaceFrameLoc;
 		private final float surfaceResolution[] = new float[]{0, 0};
-        private final int fb[] = new int[]{0, 0};
-        private final int tx[] = new int[]{0, 0};
-
+ 
         private ShaderRenderer() {
             float[] rectData = new float[]{
                     -1f, -1f, -1f, 1f,
@@ -253,24 +253,29 @@ public class MainActivity extends Activity  {
 			
 			////			
 			tempArray = new int[1];
-			GLES20.glGenBuffers(1, tempArray, 0);
+			GLES20.glGenFramebuffers(1, tempArray, 0);
 			//mFrameBufferObject = tempArray[0];
 // create fbo
 
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
-
-			GLES20.glGenBuffers(1, tempArray, 0);
+			mFrameBufferObject = tempArray[0];
+			//GLES20.glGenBuffers(1, tempArray, 0);
 			//mRenderBufferObject = tempArray[0];
-			GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, tempArray[0]);
+			//GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, tempArray[0]);
 
 			GLES20.glGenTextures(1, tempArray, 0);
-			GLES20.glBindTexture(1, tempArray[0]);
+			mTexture = tempArray[0];
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexture);
+			//GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0,GLES20.GL_RGB, 1024, 768, 0,GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, 0);
 			
+			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
 // 
-			GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_RGBA, width, height);
-			
+			//GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_RGBA, width, height);
+			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
 ////
-			GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,	GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_RENDERBUFFER, mRenderBufferObject);
+			
+			//GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER,	GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_RENDERBUFFER, mRenderBufferObject);
 
             surfaceResolution[0] = width;
             surfaceResolution[1] = height;
@@ -291,7 +296,7 @@ public class MainActivity extends Activity  {
 
             GLES20.glViewport(0, 0, (int)mResolution[0] / RATIO, (int)mResolution[1] / RATIO);
 
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject); // = 1
+			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
 
             GLES20.glDrawArrays(
                     GLES20.GL_TRIANGLE_STRIP,
@@ -313,6 +318,8 @@ public class MainActivity extends Activity  {
             GLES20.glUniform2fv(miResolutionHandle, 1, mResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
             GLES20.glUniform1f(miGlobalTimeHandle, ((float) (nowInSec - mStartTime)) / 1000f);
+
+			GLES20.glUniform1i(surfaceFrameLoc, 0);
             // uniforms ::
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -320,7 +327,7 @@ public class MainActivity extends Activity  {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             GLES20.glBindTexture(
                     GLES20.GL_TEXTURE_2D,
-                    1);
+                    mTexture);
 
             GLES20.glClear(
                     GLES20.GL_COLOR_BUFFER_BIT);
