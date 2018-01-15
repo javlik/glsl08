@@ -235,14 +235,13 @@ public class MainActivity extends Activity  {
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             program = createProgram(mVertexShader, mFragmentShader);
-
+			GLES20.glUseProgram(program);
             miGlobalTimeHandle = GLES20.glGetUniformLocation(program, "time");
             miResolutionHandle = GLES20.glGetUniformLocation(program, "resolution");
             miMouseHandle = GLES20.glGetUniformLocation(program, "mouse");
 
-            GLES20.glUseProgram(program);
             GLES20.glEnableVertexAttribArray(maPositionHandle);
-
+			
             mRectData.position(0);
             GLES20.glVertexAttribPointer(maPositionHandle, 2, GLES20.GL_FLOAT, false, 0, mRectData);
             mStartTime = SystemClock.elapsedRealtime();
@@ -260,7 +259,7 @@ public class MainActivity extends Activity  {
 			//mFrameBufferObject = tempArray[0];
 // create fbo
 
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
+		//	GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
 			mFrameBufferObject = tempArray[0];
 
 
@@ -277,6 +276,7 @@ public class MainActivity extends Activity  {
             surfaceResolution[1] = height / RATIO;
 
             createSurfProgram();
+			
             GLES20.glUseProgram(surfaceProgram);
             surfaceResolutionLoc = GLES20.glGetUniformLocation(
                     surfaceProgram, "resolution");
@@ -285,7 +285,8 @@ public class MainActivity extends Activity  {
             surfacePositionLoc = GLES20.glGetAttribLocation(
                     surfaceProgram, "position");
             GLES20.glEnableVertexAttribArray(surfacePositionLoc);
-        }
+ 
+ }
 
         @Override
         public void onDrawFrame(GL10 gl) {
@@ -295,10 +296,13 @@ public class MainActivity extends Activity  {
             GLES20.glUseProgram(program);
             GLES20.glVertexAttribPointer(0, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
+			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);	
+			
+			
 
 
             GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
-///
+/*
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
 
             GLES20.glDrawArrays(
@@ -315,7 +319,7 @@ public class MainActivity extends Activity  {
 
             GLES20.glUseProgram(surfaceProgram);
             GLES20.glVertexAttribPointer(surfacePositionLoc, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
-
+*/
  /////           // :: uniforms
             GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
             GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
@@ -324,7 +328,7 @@ public class MainActivity extends Activity  {
 
 			GLES20.glUniform1i(surfaceFrameLoc, 0);
             // uniforms ::
-////
+/*
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -339,7 +343,7 @@ public class MainActivity extends Activity  {
                     0,
                     4);
 /////
-            mGLSurfaceView.requestRender();
+*/            mGLSurfaceView.requestRender();
         }
 
         private int loadShader(int shaderType, String source) {
