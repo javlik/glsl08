@@ -328,7 +328,7 @@ public class MainActivity extends Activity  {
 
 			GLES20.glUniform1i(surfaceFrameLoc, 0);
             // uniforms ::
-/*
+
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -343,7 +343,7 @@ public class MainActivity extends Activity  {
                     0,
                     4);
 /////
-*/            mGLSurfaceView.requestRender();
+           mGLSurfaceView.requestRender();
         }
 
         private int loadShader(int shaderType, String source) {
