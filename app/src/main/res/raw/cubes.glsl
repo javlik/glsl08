@@ -10,6 +10,7 @@ precision highp float;
 uniform float time;
 uniform vec2 resolution;
 //uniform vec3 p;
+uniform vec2 mouse;
 
 // object transformation
 vec3 rotateX(vec3 p, float phi) {
@@ -33,7 +34,7 @@ vec3 rotateZ(vec3 p, float phi) {
 // ray marching objects
 float obj_udRoundBox(vec3 p) {
     vec3 b = vec3(.3);
-    //p = rotateZ(rotateY(rotateX(p, time), time), time);
+    p = rotateZ(rotateY(rotateX(p, mouse.y), mouse.x), 0.);
     return ((length(max(sin(abs(p)-b),0.0))-.05));
 }
 

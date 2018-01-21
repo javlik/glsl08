@@ -51,16 +51,16 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mGLSurfaceView.setKeepScreenOn(true);
         setContentView(mGLSurfaceView);
-		/*setContentView(R.layout.activity_main);
+		//setContentView(R.layout.activity_main);
 		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
 		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
 		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
 
 		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
-		//mSensorManager.registerListener(ael, mSensor, SensorManager.SENSOR_DELAY_GAME);
-       */
+        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		mSensorManager.registerListener(ael, mSensor, SensorManager.SENSOR_DELAY_GAME);
+       
 		//mGLSurfaceView.setOnTouchListener(this);
     }
 
@@ -98,8 +98,8 @@ public class MainActivity extends Activity  {
         // interested in events where the touch position changed.
         if (e.getAction() == MotionEvent.ACTION_MOVE)
         {
-            mRenderer.mMouse[0] = e.getX();
-            mRenderer.mMouse[1] = e.getY();
+           // mRenderer.mMouse[0] = e.getX();
+           // mRenderer.mMouse[1] = e.getY();
         }
 
 		/*
@@ -141,9 +141,18 @@ public class MainActivity extends Activity  {
 		public void onSensorChanged(SensorEvent p1)
 		{
 			// TODO: Implement this method
-			tv0.setText("" + p1.values[0]);
+			/*tv0.setText("" + p1.values[0]);
 			tv1.setText("" + p1.values[1]);
-			tv2.setText("" + p1.values[2]);
+			tv2.setText("" + p1.values[2]);*/
+			double angle1 = Math.atan2(p1.values[2],p1.values[0]);
+			double angle2 = Math.atan2(p1.values[0],p1.values[1]);
+			
+			mRenderer.mMouse[0] = (float)(angle1);
+			mRenderer.mMouse[1] = (float)(angle2);
+			
+			//tv0.setText("" + mRenderer.mMouse[0]);
+			//tv1.setText("" + mRenderer.mMouse[1]);
+			
 		}
 
 		@Override
@@ -232,7 +241,7 @@ public class MainActivity extends Activity  {
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 			
             mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
-            mFragmentShader = readShader(R.raw.cubes, MainActivity.this);
+            mFragmentShader = readShader(R.raw.cubes2, MainActivity.this);
 			
             program = createProgram(mVertexShader, mFragmentShader);
 			GLES20.glUseProgram(program);
@@ -253,31 +262,27 @@ public class MainActivity extends Activity  {
             mReducedResolution = new float[] {width / RATIO, height / RATIO};
             GLES20.glViewport(0, 0, width, height);
 
-			////
-			//tempArray = new int[1];
-			//GLES20.glGenFramebuffers(1, tempArray, 0);
-			//mFrameBufferObject = tempArray[0];
+
 // create fbop
 			mFrameBuffers = new int[1];
 			mFrameBufferTextures = new int[1];
 			
 
-			GLES20.glGenFramebuffers(1, mFrameBuffers, 0);checkGlError();
-			GLES20.glGenTextures(1, mFrameBufferTextures, 0);checkGlError();
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0]);checkGlError();
+			GLES20.glGenFramebuffers(1, mFrameBuffers, 0);
+			GLES20.glGenTextures(1, mFrameBufferTextures, 0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0]);
 			GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0,
-								GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);checkGlError();
+								GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
 			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-								   GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);checkGlError();
+								   GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
 			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-								   GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);checkGlError();
+								   GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
 			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-								   GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);checkGlError();
+								   GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
 			GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-								   GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);checkGlError();
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);checkGlError();
+								   GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
 			
-			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
 			
 				GLES20.glTexImage2D(
 					GLES20.GL_TEXTURE_2D,
@@ -291,9 +296,9 @@ public class MainActivity extends Activity  {
 					null);
 
 			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-										  GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0], 0);checkGlError();
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);checkGlError();
-			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);checkGlError();		
+										  GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0], 0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);		
 
 			
 			
@@ -301,15 +306,8 @@ public class MainActivity extends Activity  {
 
 			
 			
-			//GLES20.glGenTextures(1, tempArray, 0);
+	
 			mTexture = mFrameBufferTextures[0];
-			//GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexture);
-
-			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-			//GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-
-            //GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
-
             surfaceResolution[0] = width;
             surfaceResolution[1] = height;
 
@@ -334,8 +332,6 @@ public class MainActivity extends Activity  {
             GLES20.glUseProgram(program);
             GLES20.glVertexAttribPointer(0, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
-////			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-
             GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
             GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
@@ -345,11 +341,7 @@ public class MainActivity extends Activity  {
             GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
 ///*
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBufferObject);
-			checkGlError();
-			//int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 			
-			//GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
-			//status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 			
             GLES20.glDrawArrays(
                     GLES20.GL_TRIANGLE_STRIP,
@@ -359,9 +351,9 @@ public class MainActivity extends Activity  {
             // 2nd stage
 ////
 
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);checkGlError();
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);checkGlError();
-			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexture);checkGlError();
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTexture);
 			
             GLES20.glViewport(0,0, (int)mResolution[0], (int)mResolution[1]);
 
