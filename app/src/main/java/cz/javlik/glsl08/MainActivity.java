@@ -210,7 +210,7 @@ public class MainActivity extends Activity  {
 
         private ShaderRenderer() {
             float[] rectData = new float[]{
-                    -0.1f, -1f, -1f, 1f,
+                    -1f, -1f, -1f, 1f,
                     1f, -1f, 1f, 1f,
             };
 
@@ -226,15 +226,14 @@ public class MainActivity extends Activity  {
 								 1, 1,
 								 1, -1}).position(0);
 
-
-            mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
-            mFragmentShader = readShader(R.raw.waves, MainActivity.this);
-
-
         }
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+			
+            mVertexShader = readShader(R.raw.vertex_shader, MainActivity.this);
+            mFragmentShader = readShader(R.raw.cubes, MainActivity.this);
+			
             program = createProgram(mVertexShader, mFragmentShader);
 			GLES20.glUseProgram(program);
             miGlobalTimeHandle = GLES20.glGetUniformLocation(program, "time");
@@ -278,12 +277,26 @@ public class MainActivity extends Activity  {
 								   GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);checkGlError();
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);checkGlError();
 			
+			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
+			
+				GLES20.glTexImage2D(
+					GLES20.GL_TEXTURE_2D,
+					0,
+					GLES20.GL_RGBA,
+					(int)mReducedResolution[0],
+					(int)mReducedResolution[1],
+					0,
+					GLES20.GL_RGBA,
+					GLES20.GL_UNSIGNED_BYTE,
+					null);
+
 			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
 										  GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0], 0);checkGlError();
 			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);checkGlError();
 			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);checkGlError();		
 
-			//GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, tempArray[0]);
+			
+			
 			mFrameBufferObject = mFrameBuffers[0];
 
 			
@@ -335,7 +348,7 @@ public class MainActivity extends Activity  {
 			checkGlError();
 			//int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 			
-			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
+			//GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, mTexture, 0);
 			//status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 			
             GLES20.glDrawArrays(
@@ -372,7 +385,7 @@ public class MainActivity extends Activity  {
                     0,
                     4);
 /////
-           //mGLSurfaceView.requestRender();
+           mGLSurfaceView.requestRender();
         }
 
         private int loadShader(int shaderType, String source) {
