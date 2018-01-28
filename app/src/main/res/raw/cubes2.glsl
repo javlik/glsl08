@@ -19,7 +19,7 @@ precision highp float;
 #define TIME_SCALE 0.7
 
 #define LIGHT_PANNING
-#define CAMERA_PANNING
+//#define CAMERA_PANNING
 #define CAMERA_ROTATION
 
 uniform float time;

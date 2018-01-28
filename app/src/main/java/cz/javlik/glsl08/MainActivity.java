@@ -136,6 +136,13 @@ public class MainActivity extends Activity  {
 
 	protected class Ael implements SensorEventListener
 	{
+		double lastAngle1, lastAngle2;
+		
+		public Ael()
+		{
+			lastAngle1 = 1000f;
+			lastAngle2 = 1000f;
+		}
 
 		@Override
 		public void onSensorChanged(SensorEvent p1)
@@ -147,8 +154,17 @@ public class MainActivity extends Activity  {
 			double angle1 = Math.atan2(p1.values[2],p1.values[0]);
 			double angle2 = Math.atan2(p1.values[0],p1.values[1]);
 			
-			mRenderer.mMouse[0] = (float)(angle1);
-			mRenderer.mMouse[1] = (float)(angle2);
+			if (lastAngle1+lastAngle2 != 2000f)
+			{
+				angle1 = (29*lastAngle1+angle1)/30;
+				angle2 = (29*lastAngle2+angle2)/30;
+			}
+			
+			mRenderer.mMouse[0] = (float)((angle1)-Math.PI/2f);
+			mRenderer.mMouse[1] = (float)((angle2));
+			
+			lastAngle1=angle1;
+			lastAngle2=angle2;
 			
 			//tv0.setText("" + mRenderer.mMouse[0]);
 			//tv1.setText("" + mRenderer.mMouse[1]);
