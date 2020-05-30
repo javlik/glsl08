@@ -28,9 +28,11 @@ import javax.microedition.khronos.opengles.GL10;
 import android.*;
 import android.hardware.*;
 import android.widget.*;
+import android.view.*;
 
 
 public class MainActivity extends Activity  {
+	
     public static final String TAG = "glsl08:";
     private GLSurfaceView mGLSurfaceView;
     private ShaderRenderer mRenderer;
@@ -39,11 +41,20 @@ public class MainActivity extends Activity  {
     private SensorManager mSensorManager;
 	private TextView tv0, tv1, tv2;
 	Ael ael;
+	
+	private void enabledFullScreenMode() {
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+							 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		View decorView = getWindow().getDecorView();
+		// Hide the status bar.
+		int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+		decorView.setSystemUiVisibility(uiOptions);
+	}
+	
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mGLSurfaceView = new GLSurfaceView(this);
         mGLSurfaceView.setEGLContextClientVersion(2);
         mRenderer = new ShaderRenderer();
@@ -51,6 +62,7 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mGLSurfaceView.setKeepScreenOn(true);
         setContentView(mGLSurfaceView);
+			
 		//setContentView(R.layout.activity_main);
 		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
 		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
@@ -189,6 +201,7 @@ public class MainActivity extends Activity  {
         private int miResolutionHandle;
         private int miGlobalTimeHandle;
         private int miMouseHandle;
+		private int miPosHandle;
         private float [] mReducedResolution;
 
 		private int mFrameBufferObject;
@@ -196,7 +209,8 @@ public class MainActivity extends Activity  {
 		private int mTexture;
 		private int tempArray[];
 
-        private float[] mMouse = new float[] {0,0};
+        private float[] mMouse = new float[] {0,0,0};
+		private float[] mPos = new float[] {0,0,0};
         private int maPositionHandle;
         private long mStartTime;
 
@@ -264,7 +278,8 @@ public class MainActivity extends Activity  {
             miGlobalTimeHandle = GLES20.glGetUniformLocation(program, "time");
             miResolutionHandle = GLES20.glGetUniformLocation(program, "resolution");
             miMouseHandle = GLES20.glGetUniformLocation(program, "mouse");
-
+			miPosHandle = GLES20.glGetUniformLocation(program, "pos");
+			
             GLES20.glEnableVertexAttribArray(maPositionHandle);
 
             mRectData.position(0);
@@ -339,20 +354,24 @@ public class MainActivity extends Activity  {
             GLES20.glEnableVertexAttribArray(surfacePositionLoc);
  
  }
+ 
+ 		public void update(){
+			mMouse[2]+=mMouse[0]/100.0;
+		}
 
         @Override
         public void onDrawFrame(GL10 gl) {
 
             // 1st stage
-
+            update();
             GLES20.glUseProgram(program);
             GLES20.glVertexAttribPointer(0, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
-            GLES20.glUniform2fv(miMouseHandle, 1, mMouse, 0);
+            GLES20.glUniform3fv(miMouseHandle, 1, mMouse, 0);
             GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
             GLES20.glUniform1f(miGlobalTimeHandle, ((float) (nowInSec - mStartTime)) / 1000f);
-
+			//GLES20.glUniform3fv(miPosHandle, 1, mPos, 0);
 
             GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
 ///*
