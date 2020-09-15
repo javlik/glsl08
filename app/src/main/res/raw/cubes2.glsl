@@ -1,19 +1,16 @@
-
 #ifdef GL_ES
 precision highp float;
 #endif
 
-#define TIME_SCALE 0.7
+#define TIME_SCALE 0.1
 
 #define LIGHT_PANNING
-//#define CAMERA_PANNING
+#define CAMERA_PANNING
 #define CAMERA_ROTATION
 
 uniform float time;
 uniform vec2 resolution;
-uniform vec3 mouse;
-uniform vec3 pos;
-
+//uniform mat4 eye;
 
 vec4 dC;
 
@@ -133,8 +130,7 @@ void main(void) {
 	//vec3 pointPosition = vec3((2.0 * gl_FragCoord.xy / resolution) - vec2(1.0), 1.0);
 	//pointPosition.x *= resolution.x / resolution.y;
 	
-	//vec3 eyePosition = vec3(0.0, 0.5, 0.0);
-	vec3 eyePosition = vec3(pos.x, pos.y, pos.z);
+	vec3 eyePosition = vec3(0.0, 0.5, 0.0);
 	vec3 pointPosition = vec3((2.0 * gl_FragCoord.xy / resolution) - vec2(1.0), 1.0);
 	pointPosition.x *= resolution.x / resolution.y;
 	pointPosition.z = pointPosition.y;
@@ -150,11 +146,9 @@ void main(void) {
   	//float aboutYAngle = 1.5 * sin(0.7123 * frameTime);  
 	//float aboutZAngle = 0.8 * sin(frameTime);  
 	
- //float aboutYAngle = 0.1 * time;
- //float aboutZAngle = 0.1 * time;
- float aboutYAngle = mouse.y;
- float aboutZAngle = mouse.x;
- float aboutXAngle = mouse.z;
+ float aboutYAngle = 0.1 * time;
+ float aboutZAngle = 0.05 * time;
+
 
 	// Rotate around y-axis,  
 	vec3 tempPoint = pointPosition;  
@@ -169,25 +163,16 @@ void main(void) {
 	sinAngle = sin(aboutZAngle);  
 	pointPosition.x = (tempPoint.x * cosAngle) - (tempPoint.y * sinAngle);  
 	pointPosition.y = (tempPoint.y * cosAngle) + (tempPoint.x * sinAngle);  
-	//#endif
-	
-	// Rotate around x-axis,  
-	//tempPoint = pointPosition;  
-	//cosAngle = cos(aboutXAngle);  
-	//sinAngle = sin(aboutXAngle);  
-	//pointPosition.x = (tempPoint.z * cosAngle) - (tempPoint.y * sinAngle);  
-    //pointPosition.y = (tempPoint.y * sinAngle) + (tempPoint.x * cosAngle);  
 	#endif
-	
 	
 	// Panning,
 	#ifdef CAMERA_PANNING
 	//eyePosition.x += 14.0 * sin(0.0123*frameTime);
 	//eyePosition.z += 14.0 * sin(0.1270*frameTime);
- eyePosition.x += -1. * cos(aboutZAngle);
- eyePosition.y += -1. * sin(aboutZAngle);
+// eyePosition.x += -10. * cos(aboutZAngle);
+// eyePosition.y += -10. * sin(aboutZAngle);
  //eyePosition.z += -1. * sin(aboutZAngle);
-// eyePosition.z =0.1;
+ eyePosition.y -= time/2.;
 	#endif
 	pointPosition += eyePosition;  	
 
@@ -217,6 +202,8 @@ void main(void) {
 		vec4 specularColor = vec4(0.9, 0.9, 0.9, 0.0);
 		float shininess = 40.0;
 		
+  lightPosition = eyePosition;
+
 		gl_FragColor = light(
 			intersectionPoint, 
 			pointNormal, 

@@ -1,34 +1,22 @@
 package cz.javlik.glsl08;
 // changed in xml - for an xchg test
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.util.Arrays;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-import android.*;
+import android.app.*;
+import android.content.*;
+import android.content.res.*;
+import android.graphics.*;
 import android.hardware.*;
-import android.widget.*;
+import android.opengl.*;
+import android.os.*;
+import android.util.*;
 import android.view.*;
+import android.widget.*;
+import java.io.*;
+import java.nio.*;
+import javax.microedition.khronos.egl.*;
+import javax.microedition.khronos.opengles.*;
+
+import android.graphics.Matrix;
+import javax.microedition.khronos.egl.EGLConfig;
 
 
 public class MainActivity extends Activity  {
@@ -63,11 +51,6 @@ public class MainActivity extends Activity  {
         mGLSurfaceView.setKeepScreenOn(true);
         setContentView(mGLSurfaceView);
 			
-		//setContentView(R.layout.activity_main);
-		tv0 = (TextView)findViewById(R.id.activityMainTextView0);
-		tv1 = (TextView)findViewById(R.id.activityMainTextView1);
-		tv2 = (TextView)findViewById(R.id.activityMainTextView2);
-
 		ael = new Ael();
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -211,8 +194,12 @@ public class MainActivity extends Activity  {
 
         private float[] mMouse = new float[] {0,0,0};
 		private float[] mPos = new float[] {0,0,0};
+		private float[] _craft = new float[] {0,0,0};
+		private float[] _local = new float[] {0,0,0};
+		
         private int maPositionHandle;
         private long mStartTime;
+		private Matrix M1;
 
 		private static final String VERTEX_SHADER =
 		"attribute vec2 position;" +
@@ -356,7 +343,12 @@ public class MainActivity extends Activity  {
  }
  
  		public void update(){
-			mMouse[2]+=mMouse[0]/100.0;
+			_craft[0] -= 0.02 * Math.cos(mMouse[0]-.65);
+			_craft[1] -= 0.03 * Math.cos(mMouse[1]);
+			_craft[2] -= 0.02 * _craft[1];
+			
+			//mPos[2]-=0.01 * Math.sin(mMouse[0]);
+			//mPos[0]+=0.01 * Math.cos(mMouse[0]);
 		}
 
         @Override
@@ -367,11 +359,11 @@ public class MainActivity extends Activity  {
             GLES20.glUseProgram(program);
             GLES20.glVertexAttribPointer(0, 2, GLES20.GL_BYTE, false, 0, vertexBuffer);
 
-            GLES20.glUniform3fv(miMouseHandle, 1, mMouse, 0);
+            GLES20.glUniform3fv(miGlobalTimeHandle, 1, _craft, 0);
             GLES20.glUniform2fv(miResolutionHandle, 1, mReducedResolution, 0);
             long nowInSec = SystemClock.elapsedRealtime();
             GLES20.glUniform1f(miGlobalTimeHandle, ((float) (nowInSec - mStartTime)) / 1000f);
-			//GLES20.glUniform3fv(miPosHandle, 1, mPos, 0);
+			GLES20.glUniform3fv(miPosHandle, 1, mPos, 0);
 
             GLES20.glViewport(0, 0, (int)mReducedResolution[0], (int)mReducedResolution[1]);
 ///*
